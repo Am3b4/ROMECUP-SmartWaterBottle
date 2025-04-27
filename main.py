@@ -1,10 +1,10 @@
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from pydantic import BaseModel, Field, PastDate, AwareDatetime
+from pydantic import BaseModel, Field, PastDate, AwareDatetime, field_validator
 from auth import get_current_user, getUserExceptions
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import FileResponse
 from database import engine, SessionLocal
+from datetime import date, datetime
 from sqlalchemy.orm import Session
-from datetime import date
 
 import requests
 import models
@@ -31,7 +31,20 @@ class Utente(BaseModel):
     email: str
     sesso: str
     dataNascita: date
-    dataRegistrazione: date
+
+    @field_validator('dataNascita', mode='before')
+    def parse_dd_mm_yyyy(cls, v):
+        if bool(datetime.strptime(v, "%Y-%m-%d")):
+            return v
+        try:
+            return datetime.strptime(v, '%d/%m/%Y').date()
+        except Exception as e:
+            raise ValueError("dataNascita must be in dd/mm/yyyy") from e
+
+class UtenteLogin(BaseModel):
+
+    username: str
+    password: str
 
 
 @app.get("/")
@@ -63,7 +76,7 @@ async def register(user: Utente):
         "email": user.email,
         "sesso": user.sesso,
         "dataNascita": str(user.dataNascita),
-        "dataRegistrazione": str(user.dataRegistrazione),
+        "dataRegistrazione": str(date.today()),
     }
 
     res = requests.post('http://127.0.0.1:9000/createUser', json=body)
@@ -73,14 +86,24 @@ async def register(user: Utente):
 
 
 @app.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(user: UtenteLogin):
     body = {
-        "username": form_data.username,
-        "password": form_data.password,
+        "username": user.username,
+        "password": user.password
     }
-    res = requests.post('http://127.0.0.1:9000/token', json=body)
-    print(res.json())
-    return res.json()
+    token  = requests.post('http://127.0.0.1:9000/token', json=body)
+    return token.json()
+
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse('favicon.ico')
+
+
+@app.get("/test")
+async def test():
+    return "PD"
+
 
 def httpExceptionUserNotFound():
     raise HTTPException(status_code=404, detail="User not found")

@@ -4,10 +4,11 @@ from datetime import date, datetime, timedelta
 from database import SessionLocal, engine
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError
 from pydantic import BaseModel
 from typing import Optional
-from jose import jwt, JWTError
 
+import sqlalchemy
 import models
 
 SECRET_KEY = ""
@@ -95,8 +96,14 @@ async def createUser(utente: Utente, db: Session = Depends(getDB)):
     userModel.dataNascita = utente.dataNascita
     userModel.dataRegistrazione = utente.dataRegistrazione
 
-    db.add(userModel)
-    db.commit()
+    try:
+        db.add(userModel)
+        db.commit()
+    except sqlalchemy.exc.IntegrityError:
+        return {
+            'statusCode': '409',
+            'message': 'User already exists'
+        }
 
     return {
         'statusCode': 200,
