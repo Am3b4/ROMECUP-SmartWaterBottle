@@ -47,23 +47,12 @@ class UtenteLogin(BaseModel):
     password: str
 
 
-@app.get("/")
-async def readAll(db: Session = Depends(getDB)):
-    return db.query(models.Utenti).all()
-
 @app.get("/user/private")
 async def get_user(user: dict = Depends(get_current_user), db: Session = Depends(getDB)):
     if user is None:
         raise getUserExceptions()
     userModel = db.query(models.Utenti).filter(models.Utenti.id_utente == user["id"]).first()
     return userModel
-
-@app.get("/users/{user_id}")
-async def readUser(user_id: int, db: Session = Depends(getDB)):
-    user_model = db.query(models.Utenti).filter(models.Utenti.id_utente == user_id).first()
-    if not user_model:
-        httpExceptionUserNotFound()
-    return user_model
 
 
 @app.post("/register")
@@ -98,11 +87,6 @@ async def login(user: UtenteLogin):
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
     return FileResponse('favicon.ico')
-
-
-@app.get("/test")
-async def test():
-    return "PD"
 
 
 def httpExceptionUserNotFound():
