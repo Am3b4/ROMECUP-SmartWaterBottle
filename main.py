@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, PastDate, AwareDatetime, field_validator
+from MyFunctions import calcolaBoundingBox, filtraOrdinaFontanelle
 from auth import get_current_user, getUserExceptions
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -87,7 +88,7 @@ async def login(user: UtenteLogin):
         "username": user.username,
         "password": user.password
     }
-    token  = requests.post('http://127.0.0.1:9000/token', json=body)
+    token = requests.post('http://127.0.0.1:9000/token', json=body)
     return token.json()
 
 
@@ -110,9 +111,17 @@ async def fontanelle(db: Session = Depends(getDB)):
     }, fontanelleDati
     ))
 
-@app.post("/fontanelle/}")
+@app.post("/fontanelle/raggio")
 async def fontanelle(info: FontanelleByRange, db: Session = Depends(getDB)):
+    min_lat, max_lat, min_lon, max_lon = calcolaBoundingBox(info.latitudine, info.longitudine, info.raggio)
 
+    candidati = db.query(models.Fontanelle).filter(
+        models.Fontanelle.latitudine.between(min_lat, max_lat),
+        models.Fontanelle.longitudine.between(min_lon, max_lon)
+    ).all()
+
+    fontanelleNelRaggio = filtraOrdinaFontanelle(candidati, info.latitudine, info.longitudine, info.raggio)
+    return fontanelleNelRaggio
 
 
 def httpExceptionUserNotFound():

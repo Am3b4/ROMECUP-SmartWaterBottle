@@ -20,6 +20,7 @@ oauth2Bearer = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
 
+
 class Utente(BaseModel):
 
     username: str
@@ -30,6 +31,7 @@ class Utente(BaseModel):
     sesso: str
     dataNascita: date
     dataRegistrazione: date
+
 
 class UtenteLogin(BaseModel):
     username: str
@@ -47,8 +49,10 @@ def getDB():
 def getHashedPassword(password):
     return bcrypt_context.hash(password)
 
+
 def verifyHashedPassword(hashedPassword, password):
     return bcrypt_context.verify(password, hashedPassword)
+
 
 def authenticateUser(username: str, password: str, db: Session):
     user = db.query(models.Utenti).filter(models.Utenti.username == username).first()
@@ -70,6 +74,7 @@ def createAccessToken(username: str, user_id: int, expiresDelta: Optional[timede
     encode.update({'exp': expire})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
 async def get_current_user(token: str = Depends(oauth2Bearer)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -80,6 +85,7 @@ async def get_current_user(token: str = Depends(oauth2Bearer)):
         return {'username': username, 'id': user_id}
     except jwt.JWTError:
         raise getUserExceptions()
+
 
 @app.post("/createUser")
 async def createUser(utente: Utente, db: Session = Depends(getDB)):
@@ -132,6 +138,7 @@ def getUserExceptions():
     )
     return credentialsException
 
+
 def tokenExceptions():
     tokenExceptionResponse = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -139,6 +146,7 @@ def tokenExceptions():
         headers={"WWW-Authenticate": "Bearer"}
     )
     return tokenExceptionResponse
+
 
 def httpExceptionUserNotFound():
     raise HTTPException(status_code=404, detail="User not found")
