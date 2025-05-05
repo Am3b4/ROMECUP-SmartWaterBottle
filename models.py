@@ -19,8 +19,9 @@ class Utenti(base):
 class Fontanelle(base):
     __tablename__ = 'Fontanelle'
 
-    id_fontanelle = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     indirizzo = Column(String, nullable=False)
     latitudine = Column(Float(precision=64), nullable=False)
     longitudine = Column(Float(precision=64), nullable=False)
+    tipo = Column(String, nullable=False)
 

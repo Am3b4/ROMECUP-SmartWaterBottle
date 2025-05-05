@@ -47,6 +47,13 @@ class UtenteLogin(BaseModel):
     password: str
 
 
+class FontanelleByRange(BaseModel):
+
+    latitudine: float
+    longitudine: float
+    raggio: int = 500
+
+
 @app.get("/user/private")
 async def get_user(user: dict = Depends(get_current_user), db: Session = Depends(getDB)):
     if user is None:
@@ -87,6 +94,25 @@ async def login(user: UtenteLogin):
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
     return FileResponse('favicon.ico')
+
+
+@app.get("/fontanelle")
+async def fontanelle(db: Session = Depends(getDB)):
+
+    fontanelleDati = db.query(models.Fontanelle).all()
+    print(type(fontanelleDati))
+    return list(map(lambda x: {
+        "id": x.id,
+        "indirizzo": x.indirizzo,
+        "latitudine": x.latitudine,
+        "longitudine": x.longitudine,
+        "tipo": x.tipo
+    }, fontanelleDati
+    ))
+
+@app.post("/fontanelle/}")
+async def fontanelle(info: FontanelleByRange, db: Session = Depends(getDB)):
+
 
 
 def httpExceptionUserNotFound():
