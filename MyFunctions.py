@@ -36,6 +36,12 @@ def calcolaDistanzaHaversine(
     """
     Calcola la distanza in metri tra due punti geo con formula Haversine.
     """
+
+    lat1 = float(lat1)
+    lon1 = float(lon1)
+    lat2 = float(lat2)
+    lon2 = float(lon2)
+
     phi1, lambda1, phi2, lambda2 = map(radians, (lat1, lon1, lat2, lon2))
     dphi = phi2 - phi1
     dlambda = lambda2 - lambda1
@@ -55,7 +61,7 @@ def filtraOrdinaFontanelle(
     """
     lista: List = []
     for poi in candidati:
-        dist = calcolaDistanzaHaversine(lat_centro, lon_centro, poi.latitude, poi.longitude)
+        dist = calcolaDistanzaHaversine(lat_centro, lon_centro, poi.latitudine, poi.longitudine)
         if dist <= raggio_m:
             lista.append({
                 "id": poi.id,
@@ -66,5 +72,5 @@ def filtraOrdinaFontanelle(
                 'distanza_m': dist,
                 }
             )
-    lista.sort(key=lambda x: x.distanza_m)
+    lista.sort(key=lambda x: x['distanza_m'])
     return lista
